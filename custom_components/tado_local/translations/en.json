@@ -44,15 +44,49 @@
       },
       "target_temperature": {
         "name": "Target Temperature"
+      },
+      "server_status": {
+        "name": "Server status"
+      },
+      "server_version": {
+        "name": "TadoLocal version"
+      },
+      "api_limit": {
+        "name": "API calls daily limit"
+      },
+      "api_remaining": {
+        "name": "Remaining API calls"
+      },
+      "api_used": {
+        "name": "API calls used"
       }
     },
     "binary_sensor": {
+      "bridge_connected": {
+        "name": "Tado Bridge"
+      },
+      "cloud_api_enabled": {
+        "name": "Cloud API"
+      },
+      "cloud_api_authenticated": {
+        "name": "Cloud API authentication"
+      },
       "heating_active": {
         "name": "Status"
       },
       "battery_low": {
         "name": "Battery"
       }
+    }
+  },
+  "services": {
+    "resume_all_schedules": {
+      "description": "Instruct Tado to resume to the smart schedule for all zones.",
+      "name": "Resume schedule for all zones"
+    },
+    "turn_off_all_zones": {
+      "description": "Instruct Tado to stop the smart schedule for all zones, add go to frost protection.",
+      "name": "Turn off heating for all zones"
     }
   }
 }

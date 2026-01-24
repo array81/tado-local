@@ -1,0 +1,10 @@
+{
+  "services": {
+    "resume_all_schedules": {
+      "service": "mdi:calendar-clock"
+    },
+    "turn_off_all_zones": {
+      "service": "mdi:radiator-off"
+    }
+  }
+}

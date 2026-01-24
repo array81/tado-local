@@ -10,7 +10,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN, MANUFACTURER, format_model
+from .const import DOMAIN, MANUFACTURER, format_model, MASTER_DEVICE
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -32,6 +32,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     devices_data = coordinator.data.get("devices", [])
     for device in devices_data:
         entities.append(TadoDeviceSerial(coordinator, device))
+        dev_type = device.get("device_type", "Device")
+        if dev_type == MASTER_DEVICE:
+            # Add TadoLocal status fields to MASTER_DEVICE (internet bridge) entity
+            entities.append(TadoDeviceServer(coordinator, device))
+            entities.append(TadoDeviceServerVersion(coordinator, device))
+            entities.append(TadoApiDayLimit(coordinator, device))
+            entities.append(TadoApiCallsLeft(coordinator, device))
+            entities.append(TadoApiCallsUsed(coordinator, device))
 
     async_add_entities(entities)
 
@@ -160,3 +168,138 @@ class TadoDeviceSerial(CoordinatorEntity, SensorEntity):
             if did == self._device_id:
                 return dev.get("serial_number", self._serial)
         return self._serial
+
+class TadoDeviceServer(CoordinatorEntity, SensorEntity):
+    """Sensore seriale dispositivo."""
+    
+    _attr_has_entity_name = True
+    _attr_translation_key = "server_status"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_icon = "mdi:server-network"
+    
+    def __init__(self, coordinator, device_data):
+        super().__init__(coordinator)
+        self._device_id = device_data.get("device_id") or device_data.get("id")
+        self._attr_unique_id = f"tado_local_server_{self._device_id}"
+       
+        self._device_info_data = {
+            "identifiers": {(DOMAIN, "device", self._device_id)}
+        }
+
+    @property
+    def device_info(self):
+        return self._device_info_data
+
+    @property
+    def native_value(self):
+        status = self.coordinator.data.get("status", None)
+        if not status:
+            return "unknown"
+        return status.get("status", "unknown")
+
+class TadoDeviceServerVersion(CoordinatorEntity, SensorEntity):
+    """Sensore server dispositivo."""
+    
+    _attr_has_entity_name = True
+    _attr_translation_key = "server_version"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_icon = "mdi:label-outline"
+    
+    def __init__(self, coordinator, device_data):
+        super().__init__(coordinator)
+        self._device_id = device_data.get("device_id") or device_data.get("id")
+        self._attr_unique_id = f"tado_local_server_version_{self._device_id}"
+       
+        self._device_info_data = {
+            "identifiers": {(DOMAIN, "device", self._device_id)}
+        }
+
+    @property
+    def device_info(self):
+        return self._device_info_data
+
+    @property
+    def native_value(self):
+        status = self.coordinator.data.get("status", None)
+        if not status:
+            return "unknown"
+        return status.get("version", "unknown")
+    
+class TadoApiDayLimit(CoordinatorEntity, SensorEntity):
+    """Sensore seriale dispositivo."""
+    
+    _attr_has_entity_name = True
+    _attr_translation_key = "api_limit"
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_icon = "mdi:calendar-end-outline"
+    _attr_suggested_display_precision = 0
+
+    def __init__(self, coordinator, device_data):
+        super().__init__(coordinator)
+        self._device_id = device_data.get("device_id") or device_data.get("id")
+        self._attr_unique_id = f"tado_local_api_limit_{self._device_id}"
+        self._device_info_data = {
+            "identifiers": {(DOMAIN, "device", self._device_id)}
+        }
+
+    @property
+    def device_info(self):
+        return self._device_info_data
+
+    @property
+    def native_value(self) -> int:
+        rate_limit = self.coordinator.data.get("status", {}).get("cloud_api", {}).get("rate_limit", None)
+        return rate_limit.get("granted_calls", 0) if rate_limit else -1
+
+class TadoApiCallsLeft(CoordinatorEntity, SensorEntity):
+    """Sensore API calls dispositivo."""
+    
+    _attr_has_entity_name = True
+    _attr_translation_key = "api_remaining"
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_icon = "mdi:counter"
+    _attr_suggested_display_precision = 0
+
+    def __init__(self, coordinator, device_data):
+        super().__init__(coordinator)
+        self._device_id = device_data.get("device_id") or device_data.get("id")
+        self._attr_unique_id = f"tado_local_api_remaining_{self._device_id}"
+        self._device_info_data = {
+            "identifiers": {(DOMAIN, "device", self._device_id)}
+        }
+
+    @property
+    def device_info(self):
+        return self._device_info_data
+
+    @property
+    def native_value(self) -> int:
+        rate_limit = self.coordinator.data.get("status", {}).get("cloud_api", {}).get("rate_limit", {})
+        return rate_limit.get("remaining_calls", 0)
+
+class TadoApiCallsUsed(CoordinatorEntity, SensorEntity):
+    """Sensore API calls dispositivo."""
+    
+    _attr_has_entity_name = True
+    _attr_translation_key = "api_used"
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_icon = "mdi:gauge-low"
+    _attr_native_unit_of_measurement = PERCENTAGE
+    _attr_suggested_display_precision = 1
+
+    def __init__(self, coordinator, device_data):
+        super().__init__(coordinator)
+        self._device_id = device_data.get("device_id") or device_data.get("id")
+        self._attr_unique_id = f"tado_local_api_used_{self._device_id}"
+        self._device_info_data = {
+            "identifiers": {(DOMAIN, "device", self._device_id)}
+        }
+
+    @property
+    def device_info(self):
+        return self._device_info_data
+
+    @property
+    def native_value(self) -> float:
+        rate_limit = self.coordinator.data.get("status", {}).get("cloud_api", {}).get("rate_limit", {})
+        return rate_limit.get("usage_percent", 0)

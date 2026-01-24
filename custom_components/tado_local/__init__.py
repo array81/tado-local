@@ -12,6 +12,7 @@ from homeassistant.helpers.update_coordinator import (
     UpdateFailed,
 )
 
+from .services import async_setup_services
 from .const import DOMAIN, CONF_IP_ADDRESS, CONF_PORT, CONF_UPDATE_INTERVAL, PLATFORMS
 
 _LOGGER = logging.getLogger(__name__)
@@ -45,12 +46,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                             raise UpdateFailed(f"Errore API Devices: {resp_devices.status}")
                         devices_json = await resp_devices.json()
 
+                    # Server status
+                    async with session.get(f"{base_url}/status") as resp_status:
+                        if resp_status.status != 200:
+                            raise UpdateFailed(f"Errore API Status: {resp_status.status}")
+                        status_info = await resp_status.json()
+
                     zones_list = zones_json.get("zones", zones_json) if isinstance(zones_json, dict) else zones_json
                     devices_list = devices_json.get("devices", devices_json) if isinstance(devices_json, dict) else devices_json
 
                     return {
                         "zones": zones_list,
-                        "devices": devices_list
+                        "devices": devices_list,
+                        "status": status_info
                     }
 
             except Exception as err:
@@ -83,6 +91,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     
     # Listener per ricaricare se le opzioni cambiano
     entry.async_on_unload(entry.add_update_listener(update_listener))
+
+    await async_setup_services(hass, coordinator, base_url)
     
     return True
 

@@ -44,15 +44,49 @@
       },
       "target_temperature": {
         "name": "Temperatura Target"
+      },
+      "server_status": {
+        "name": "Stato del server"
+      },
+      "server_version": {
+        "name": "Versione TadoLocal"
+      },
+      "api_limit": {
+        "name": "Limite delle chiamate API"
+      },
+      "api_remaining": {
+        "name": "Chiamate API rimanenti"
+      },
+      "api_used": {
+        "name": "Chiamate API utilizzate"
       }
     },
     "binary_sensor": {
+      "bridge_connected": {
+        "name": "Tado Bridge"
+      },
+      "cloud_api_enabled": {
+        "name": "API cloud"
+      },
+      "cloud_api_authenticated": {
+        "name": "API cloud autenticata"
+      },
       "heating_active": {
         "name": "Stato"
       },
       "battery_low": {
         "name": "Batteria"
       }
+    }
+  },
+  "services": {
+    "resume_all_schedules": {
+      "description": "Chiedi a Tado di riprendere la programmazione intelligente per tutte le zone.",
+      "name": "Riprendi il programma per tutte le zone"
+    },
+    "turn_off_all_zones": {
+      "description": "Chiedi a Tado di interrompere la programmazione intelligente per tutte le zone e di attivare la protezione antigelo.",
+      "name": "Spegnere il riscaldamento per tutte le zone"
     }
   }
 }

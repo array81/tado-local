@@ -54,7 +54,8 @@ class TadoLocalClimate(CoordinatorEntity, ClimateEntity):
     def __init__(self, coordinator, initial_data, base_url):
         super().__init__(coordinator)
         self._zone_id = initial_data.get("zone_id") or initial_data.get("id")
-        self._attr_name = initial_data.get("name", f"Zona {self._zone_id}")
+        self._attr_name = "" # remove double name from Climate control 
+        self._device_name = initial_data.get("name", f"Zone {self._zone_id}")
         self._attr_unique_id = f"tado_local_zone_{self._zone_id}"
         self._base_url = base_url
 
@@ -63,7 +64,7 @@ class TadoLocalClimate(CoordinatorEntity, ClimateEntity):
         """Device Info per la Zona Logica."""
         return {
             "identifiers": {(DOMAIN, "zone", self._zone_id)},
-            "name": self._attr_name,
+            "name": self._device_name,
             "manufacturer": MANUFACTURER,
             "model": format_model("zone_control"), # Usa "Zone Control" formattato
         }

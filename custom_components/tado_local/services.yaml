@@ -1,0 +1,5 @@
+turn_off_all_zones:
+  description: "Turn off heating for all zones."
+
+resume_all_schedules:
+  description: "Resume schedule for all zones."

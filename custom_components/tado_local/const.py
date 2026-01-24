@@ -13,6 +13,7 @@ PLATFORMS = ["climate", "sensor", "binary_sensor"]
 
 # Uniformiamo il produttore per far apparire il logo Tado ufficiale
 MANUFACTURER = "Tado"
+MASTER_DEVICE = "internet_bridge"
 
 # Mappa per abbellire i nomi dei modelli
 MODEL_MAP = {

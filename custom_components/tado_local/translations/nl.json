@@ -1,0 +1,92 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Tado Local",
+        "description": "Verbind met Tado Local API.",
+        "data": {
+          "ip_address": "IP Adres",
+          "port": "Poort",
+          "update_interval": "Ververs interval (seconden)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Kan niet verbinden.",
+      "unknown": "Onverwachte fout"
+    },
+    "abort": {
+      "already_configured": "Dit apparaat is al geconfigureerd"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Configureer Tado Local",
+        "data": {
+          "ip_address": "IP Adres",
+          "port": "Poort",
+          "update_interval": "Ververs interval (seconden)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "humidity": {
+        "name": "Luchtvochtigheid"
+      },
+      "serial_number": {
+        "name": "Serie Nummer"
+      },
+      "current_temperature": {
+        "name": "Temperatuur"
+      },
+      "target_temperature": {
+        "name": "Doel Temperatuur"
+      },
+      "server_status": {
+        "name": "Serverstatus"
+      },
+      "server_version": {
+        "name": "TadoLocal versie"
+      },
+      "api_limit": {
+        "name": "API-aanroep daglimiet"
+      },
+      "api_remaining": {
+        "name": "Resterende API-aanroepen"
+      },
+      "api_used": {
+        "name": "Gebruikte API-aanroepen"
+      }
+    },
+    "binary_sensor": {
+      "bridge_connected": {
+        "name": "Tado modem"
+      },
+      "cloud_api_enabled": {
+        "name": "Cloud API"
+      },
+      "cloud_api_authenticated": {
+        "name": "Cloud API-authenticatie"
+      },
+      "heating_active": {
+        "name": "Verwarmen"
+      },
+      "battery_low": {
+        "name": "Batterij"
+      }
+    }
+  },
+  "services": {
+    "resume_all_schedules": {
+      "description": "Geef Tado de opdracht om het schakel schema voor alle ruimtes te hervatten.",
+      "name": "Activeer schakel programma voor alle ruimtes "
+    },
+    "turn_off_all_zones": {
+      "description": "Geef Tado de opdracht om het slimme schema voor alle ruimtes te stoppen en over te schakelen naar vorstbeveiliging.",
+      "name": "Zet voor alle ruimte de verwarming uit"
+    }
+  }
+}
