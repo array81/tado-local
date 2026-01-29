@@ -1,0 +1,58 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Tado Local",
+        "description": "Verbindung zur Tado Local API",
+        "data": {
+          "ip_address": "IP Addresse",
+          "port": "Port",
+          "update_interval": "Update Intervall (Sekunden)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Verbindung fehlgeschlagen",
+      "unknown": "Unerwarteter Fehler"
+    },
+    "abort": {
+      "already_configured": "Gerät ist bereits konfiguriert"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Konfiguriere Tado Local",
+        "data": {
+          "ip_address": "IP-Adresse",
+          "port": "Port",
+          "update_interval": "Update Intervall (Sekunden)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "humidity": {
+        "name": "Luftfeuchtigkeit"
+      },
+      "serial_number": {
+        "name": "Seriennummer"
+      },
+      "current_temperature": {
+        "name": "Temperatur"
+      },
+      "target_temperature": {
+        "name": "Zieltemperatur"
+      }
+    },
+    "binary_sensor": {
+      "heating_active": {
+        "name": "Status"
+      },
+      "battery_low": {
+        "name": "Batterie"
+      }
+    }
+  }
+}
