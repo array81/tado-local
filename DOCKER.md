@@ -15,7 +15,7 @@ This guide provides a step-by-step walkthrough to Dockerize [TadoLocal](https://
 Clone the repository or download the source code to your machine.
 
 ```bash
-git clone https://github.com/your-username/TadoLocal.git
+git clone https://github.com/AmpScm/TadoLocal.git
 cd TadoLocal
 
 ```

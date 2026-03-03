@@ -34,7 +34,7 @@ This integration connects to the TadoLocal API (usually on port `4407`).
 ### 1️⃣ Install via HACS (Recommended)
 1. Open Home Assistant and install [HACS](https://hacs.xyz/).
 2. Go to **HACS** → **Integrations** → **Add Custom Repository**.
-3. Enter the repository URL: `https://github.com/yourusername/tado-local`.
+3. Enter the repository URL: `https://github.com/array81/tado-local`.
 4. Click **Install** and restart Home Assistant.
 5. Navigate to **Settings** → **Devices & Services** → **Add Integration** → Search for **Tado Local**.
 6. Enter your TadoLocal ip and port.
