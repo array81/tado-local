@@ -3,20 +3,27 @@
     "step": {
       "user": {
         "title": "Tado Local",
-        "description": "Connect to Tado Local API.",
+        "description": "Connect to the Tado Local API.",
         "data": {
           "ip_address": "IP Address",
           "port": "Port",
           "update_interval": "Update Interval (seconds)"
         }
+      },
+      "confirm": {
+        "title": "Tado Local Discovered",
+        "description": "A Tado Local server was found at {ip}:{port}. Do you want to set it up?"
       }
     },
     "error": {
       "cannot_connect": "Failed to connect.",
-      "unknown": "Unexpected error"
+      "unknown": "Unexpected error",
+      "not_tado_local": "The discovered device is not a Tado Local server"
     },
     "abort": {
-      "already_configured": "Device is already configured"
+      "already_configured": "Device is already configured",
+      "cannot_connect": "Failed to connect to the discovered server",
+      "not_tado_local": "The discovered device is not a Tado Local server"
     }
   },
   "options": {
@@ -72,7 +79,10 @@
         "name": "Cloud API authentication"
       },
       "heating_active": {
-        "name": "Status"
+        "name": "Heating"
+      },
+      "cooling_active": {
+        "name": "Cooling"
       },
       "battery_low": {
         "name": "Battery"
@@ -89,12 +99,24 @@
   },
   "services": {
     "resume_all_schedules": {
-      "description": "Instruct Tado to resume to the smart schedule for all zones.",
-      "name": "Resume schedule for all zones"
+      "name": "Resume Schedule for All Zones",
+      "description": "Instruct Tado to resume the smart schedule for all zones.",
+      "fields": {
+        "persistent": {
+          "name": "Persistent (or temporary)",
+          "description": "Whether to make the change persistent (=true, send to Cloud) or temporary (=false) until the next schedule change."
+        }
+      }
     },
     "turn_off_all_zones": {
-      "description": "Instruct Tado to stop the smart schedule for all zones, add go to frost protection.",
-      "name": "Turn off heating for all zones"
+      "name": "Turn Off Heating for All Zones",
+      "description": "Instruct Tado to stop the smart schedule for all zones and switch to frost protection.",
+      "fields": {
+        "persistent": {
+          "name": "Persistent (or temporary)",
+          "description": "Whether to make the change persistent (=true, send to Cloud) or temporary (=false) until the next schedule change."
+        }
+      }
     }
   }
 }

@@ -4,12 +4,11 @@ from __future__ import annotations
 
 import logging
 import aiohttp
-from typing import Any, Dict
 
 from homeassistant.core import  HomeAssistant, ServiceCall
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
-from .const import DOMAIN, CONF_IP_ADDRESS, CONF_PORT, CONF_UPDATE_INTERVAL, PLATFORMS
+from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -18,9 +17,12 @@ async def async_setup_services(
 ) -> None:
     """Set up the services for Tado Local."""
 
-    async def _async_send_zone_update(zone_id, temperature):
-        url = f"{base_url}/zones/{zone_id}/set"
-        params = {"temperature": str(temperature)}
+    async def _async_send_all_zones_update(heating_enabled: bool, persistent: bool):
+        url = f"{base_url}/zones/set"
+        params = {
+            "heating_enabled": "true" if heating_enabled else "false",
+            "persistant": "true" if persistent else "false",
+        }
 
         async with aiohttp.ClientSession() as session:
             try:
@@ -33,24 +35,16 @@ async def async_setup_services(
 
     async def handle_resume_schedules(call: ServiceCall) -> None:
         """Service to resume all schedules."""
-        _LOGGER.debug("Service call: resume_all_schedules")
-        current_data = coordinator.data
-        zones_list = current_data.get("zones", [])
-        for zone in zones_list:
-            zid = zone.get("zone_id") or zone.get("id")
-            await _async_send_zone_update(zid, -1)
-
+        persistent = call.data.get("persistent", False)
+        _LOGGER.debug("Service call: resume_all_schedules(persistent=%s)", persistent)
+        await _async_send_all_zones_update(True, persistent)
         await coordinator.async_request_refresh()
 
     async def handle_turn_off_all(call: ServiceCall) -> None:
         """Service to turn off all zones."""
-        _LOGGER.debug("Service call: turn_off_all_zones")
-        current_data = coordinator.data
-        zones_list = current_data.get("zones", [])
-        for zone in zones_list:
-            zid = zone.get("zone_id") or zone.get("id")
-            await _async_send_zone_update(zid, 0)
-
+        persistent = call.data.get("persistent", False)
+        _LOGGER.debug("Service call: turn_off_all_zones(persistent=%s)", persistent)
+        await _async_send_all_zones_update(False, persistent)
         await coordinator.async_request_refresh()
 
     hass.services.async_register(

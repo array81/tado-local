@@ -9,14 +9,21 @@
           "port": "Port",
           "update_interval": "Update Intervall (Sekunden)"
         }
+      },
+      "confirm": {
+        "title": "Tado Local entdeckt",
+        "description": "Ein Tado Local Server wurde unter {ip}:{port} gefunden. Möchtest du ihn einrichten?"
       }
     },
     "error": {
       "cannot_connect": "Verbindung fehlgeschlagen",
-      "unknown": "Unerwarteter Fehler"
+      "unknown": "Unerwarteter Fehler",
+      "not_tado_local": "Kein 'Tado Local' Dienst unter der angegebenen IP Adresse und Port gefunden"
     },
     "abort": {
-      "already_configured": "Gerät ist bereits konfiguriert"
+      "already_configured": "Gerät ist bereits konfiguriert",
+      "cannot_connect": "Verbindung zum gefundenen Server fehlgeschlagen",
+      "not_tado_local": "Das gefundene Gerät ist kein Tado Local Server"
     }
   },
   "options": {
@@ -44,14 +51,71 @@
       },
       "target_temperature": {
         "name": "Zieltemperatur"
+      },
+      "server_status": {
+        "name": "Serverstatus"
+      },
+      "server_version": {
+        "name": "TadoLocal Version"
+      },
+      "api_limit": {
+        "name": "API Aufrufe Tageslimit"
+      },
+      "api_remaining": {
+        "name": "Verbleibende API Aufrufe"
+      },
+      "api_used": {
+        "name": "Verwendete API Aufrufe"
       }
     },
     "binary_sensor": {
+      "bridge_connected": {
+        "name": "Verbindung zur Bridge"
+      },
+      "cloud_api_enabled": {
+        "name": "Cloud API aktiviert"
+      },
+      "cloud_api_authenticated": {
+        "name": "Cloud API authentifiziert"
+      },
       "heating_active": {
-        "name": "Status"
+        "name": "Heizung aktiv"
+      },
+      "cooling_active": {
+        "name": "Kühlung aktiv"
       },
       "battery_low": {
         "name": "Batterie"
+      }
+    },
+    "text": {
+      "window_open_timeout": {
+        "name": "Fenster offen Timeout"
+      },
+      "window_rest_timeout": {
+        "name": "Fenster offen Ruhe Timeout"
+      }
+    },
+    "services": {
+      "resume_all_schedules": {
+        "description": "Tado anweisen, den intelligenten Zeitplan für alle Zonen fortzusetzen.",
+        "name": "Zeitplan für alle Zonen fortsetzen",
+        "fields": {
+          "persistent": {
+            "description": "Ob die Änderung dauerhaft (an Cloud senden) oder temporär (bis zur nächsten Zeitplanänderung) sein soll.",
+            "name": "Dauerhaft (oder temporär)"
+          }
+        }
+      },
+      "turn_off_all_zones": {
+        "description": "Tado anweisen, den intelligenten Zeitplan für alle Zonen zu stoppen und in den Frostschutzmodus zu wechseln.",
+        "name": "Heizung für alle Zonen ausschalten",
+        "fields": {
+          "persistent": {
+            "description": "Ob die Änderung dauerhaft (an Cloud senden) oder temporär (bis zur nächsten Zeitplanänderung) sein soll.",
+            "name": "Dauerhaft (oder temporär)"
+          }
+        }
       }
     }
   }

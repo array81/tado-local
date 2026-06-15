@@ -1,4 +1,5 @@
 import logging
+from urllib.parse import urlparse
 from homeassistant.core import HomeAssistant
 from homeassistant.components.binary_sensor import (
     BinarySensorEntity,
@@ -8,6 +9,7 @@ from homeassistant.const import EntityCategory
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.network import get_url
 
 from .const import DOMAIN, MANUFACTURER, format_model, MASTER_DEVICE
 
@@ -19,12 +21,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     coordinator = data["coordinator"]
     base_url = data["base_url"]
     
+    # if the base_url contains localhost, replace it with the actual HA host to ensure connectivity from other devices
+    if "localhost" in base_url:
+        ha_host = urlparse(get_url(hass)).hostname
+        base_url = base_url.replace("localhost", ha_host)
+    
     entities = []
     
     zones = coordinator.data.get("zones", [])
     for zone in zones:
         entities.append(TadoZoneHeating(coordinator, zone))
         entities.append(TadoZoneOpenWindow(coordinator, zone))
+        if zone.get("zone_type", "HEATING") == "AIR_CONDITIONING":
+            entities.append(TadoZoneCooling(coordinator, zone))
         
     devices = coordinator.data.get("devices", [])
     for device in devices:
@@ -73,6 +82,40 @@ class TadoZoneHeating(CoordinatorEntity, BinarySensorEntity):
                 val = state.get("cur_heating", 0)
                 # cur_heating can be 0=off, 1=heating, 2=cooling
                 return val == 1
+        return False
+    
+class TadoZoneCooling(CoordinatorEntity, BinarySensorEntity):
+    _attr_has_entity_name = True
+    _attr_icon = "mdi:air-conditioner"
+    _attr_translation_key = "cooling_active"
+
+    def __init__(self, coordinator, zone_data):
+        super().__init__(coordinator)
+        self._zone_id = zone_data.get("zone_id") or zone_data.get("id")
+        self._zone_name = zone_data.get("name")
+        self._attr_unique_id = f"tado_local_cooling_{self._zone_id}"
+        self._tado_zone_id = zone_data.get("tado_zone_id", "")
+
+    @property
+    def device_info(self):
+        return {
+            "configuration_url": f"https://app.tado.com/en/main/home/zoneV2/{self._tado_zone_id}/",
+            "identifiers": {(DOMAIN, "zone", self._zone_id)},
+            "name": self._zone_name,
+            "manufacturer": MANUFACTURER,
+            "model": format_model("zone_control"),
+        }
+
+    @property
+    def is_on(self):
+        zones = self.coordinator.data.get("zones", [])
+        for zone in zones:
+            zid = zone.get("zone_id") or zone.get("id")
+            if zid == self._zone_id:
+                state = zone.get("state", zone)
+                val = state.get("cur_heating", 0)
+                # cur_heating can be 0=off, 1=heating, 2=cooling
+                return val == 2
         return False
 
 
@@ -129,7 +172,9 @@ class TadoDeviceBattery(CoordinatorEntity, BinarySensorEntity):
             via_device = (DOMAIN, "zone", zone_id)
 
         raw_model = device_data.get("device_type", "Device")
-        raw_model += (" " + device_data.get("model")) or ""
+        model = device_data.get("model")
+        if model:
+            raw_model += " " + model
         sw_version = device_data.get("firmware_version", None) 
 
         self._device_info_data = {

@@ -81,6 +81,15 @@ This project is licensed under the MIT License.
 
 ## 📌 Changelog
 
+### v1.1.2
+- **New**: Automatic detection and configuration for TadoLocalServer (zero‑config)  
+  *Known limitation: `localhost` is not discoverable*
+- **New**: Home Assistant notification when re‑authorization is required
+- **New**: Air conditioning support
+- **New**: Persistent Home/Away SMART Schedule handling (requires an API call)
+- **Improved**: Sensitive information is now hidden in downloaded diagnostic data
+- **Improved**: Home Assistant services now include an option to set SMART Schedule persistence (requires an API call)
+
 ### v1.1.0
 - **New**: Home Assistant services (stop all zones from heating, resume heating in all zones).
 - **New**: Server info panel.

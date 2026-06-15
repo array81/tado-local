@@ -9,14 +9,21 @@
           "port": "Poort",
           "update_interval": "Ververs interval (seconden)"
         }
+      },
+      "confirm": {
+        "title": "Tado Local Gevonden",
+        "description": "Er is een Tado Local server gevonden op {ip}:{port}. Wil je deze instellen?"
       }
     },
     "error": {
       "cannot_connect": "Kan niet verbinden.",
-      "unknown": "Onverwachte fout"
+      "unknown": "Onverwachte fout",
+      "not_tado_local": "Geen 'Tado Local' service gevonden op het opgegeven IP adres en poort"
     },
     "abort": {
-      "already_configured": "Dit apparaat is al geconfigureerd"
+      "already_configured": "Dit apparaat is al geconfigureerd",
+      "cannot_connect": "Kan geen verbinding maken met de gevonden server",
+      "not_tado_local": "Het gevonden apparaat is geen Tado Local server"
     }
   },
   "options": {
@@ -74,8 +81,14 @@
       "heating_active": {
         "name": "Verwarmen"
       },
+      "cooling_active": {
+        "name": "Koelen"
+      },
       "battery_low": {
         "name": "Batterij"
+      },
+      "open_window": {
+        "name": "Raam"
       }
     },
     "text": {
@@ -87,14 +100,31 @@
       }
     }
   },
+  "platform": {
+    "sensor": {},
+    "binary_sensor": {},
+    "text": {}
+  },
   "services": {
     "resume_all_schedules": {
       "description": "Geef Tado de opdracht om het schakel schema voor alle ruimtes te hervatten.",
-      "name": "Activeer schakel programma voor alle ruimtes "
+      "name": "Activeer schakel programma voor alle ruimtes",
+      "fields": {
+          "persistent": {
+            "description": "Of de wijziging persistent moet zijn (=aan naar Cloud sturen) of tijdelijk (=uit) tot de volgende schema wijziging.",
+            "name": "Permanent (of tijdelijk)"
+          }
+      }
     },
     "turn_off_all_zones": {
       "description": "Geef Tado de opdracht om het slimme schema voor alle ruimtes te stoppen en over te schakelen naar vorstbeveiliging.",
-      "name": "Zet voor alle ruimte de verwarming uit"
+      "name": "Zet voor alle ruimte de verwarming uit",
+      "fields": {
+          "persistent": {
+            "description": "Of de wijziging persistent moet zijn (=aan naar Cloud sturen) of tijdelijk (=uit) tot de volgende schema wijziging.",
+            "name": "Permanent (of tijdelijk)"
+          }
+      }
     }
   }
 }

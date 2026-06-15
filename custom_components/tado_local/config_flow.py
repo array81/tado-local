@@ -29,6 +29,10 @@ async def validate_input(hass: HomeAssistant, data: Dict[str, Any]) -> None:
             async with session.get(url) as response:
                 if response.status != 200:
                     raise Exception("Status code not 200")
+                js = await response.json()
+                if js.get("service") != "Tado Local":
+                    raise Exception("not_tado_local")
+
 
 class TadoLocalConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Gestisce il flusso di configurazione per Tado Local."""
@@ -42,6 +46,9 @@ class TadoLocalConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         # Passiamo la config_entry al costruttore
         return TadoLocalOptionsFlowHandler(config_entry)
 
+    # -------------------------------------------------------------------------
+    # USER STEP (manual setup)
+    # -------------------------------------------------------------------------
     async def async_step_user(
         self, user_input: Optional[Dict[str, Any]] = None
     ) -> FlowResult:
@@ -54,8 +61,11 @@ class TadoLocalConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             except Exception:
                 errors["base"] = "cannot_connect"
             else:
+                await self.async_set_unique_id("tado_local_server")
+                self._abort_if_unique_id_configured()
+
                 return self.async_create_entry(
-                    title=f"Tado Local ({user_input[CONF_IP_ADDRESS]})",
+                    title=f"Tado Local ({user_input[CONF_IP_ADDRESS]})",  
                     data=user_input
                 )
 
@@ -69,6 +79,73 @@ class TadoLocalConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="user", data_schema=data_schema, errors=errors
         )
 
+    # -------------------------------------------------------------------------
+    # ZEROCONF DISCOVERY STEP
+    # -------------------------------------------------------------------------
+    async def async_step_zeroconf(self, discovery_info) -> FlowResult:
+        """Handle mDNS discovery of tado-local."""
+        host = discovery_info.host
+        port = discovery_info.port or 4407
+
+        # Validate the discovered server
+        try:
+            url = f"http://{host}:{port}/api"
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, timeout=5) as resp:
+                    if resp.status != 200:
+                        return self.async_abort(reason="cannot_connect")
+                    data = await resp.json()
+                    if data.get("service") != "Tado Local":
+                        return self.async_abort(reason="not_tado_local")
+        except Exception:
+            return self.async_abort(reason="cannot_connect")
+
+        # Prevent duplicates
+        await self.async_set_unique_id("tado_local_server")
+        self._abort_if_unique_id_configured()
+
+        # Store discovery info for confirm step
+        self._discovered_host = host
+        self._discovered_port = port
+
+        return await self.async_step_confirm()
+
+    # -------------------------------------------------------------------------
+    # CONFIRMATION STEP
+    # -------------------------------------------------------------------------
+    async def async_step_confirm(self, user_input=None) -> FlowResult:
+        def _is_local_address(ip: str) -> bool:
+            import socket
+            try:
+                host_ips = socket.gethostbyname_ex(socket.gethostname())[2]
+                return ip in host_ips
+            except Exception:
+                return False
+        
+        display_ip = "localhost" if _is_local_address(self._discovered_host) else self._discovered_host
+
+        """Ask user to confirm adding the discovered server."""
+        if user_input is not None:
+            return self.async_create_entry(
+                title=f"Tado Local ({display_ip})",
+                data={
+                    CONF_IP_ADDRESS: self._discovered_host,  # keep real IP internally
+                    CONF_PORT: self._discovered_port,
+                    CONF_UPDATE_INTERVAL: DEFAULT_UPDATE_INTERVAL,
+                }
+            )
+
+        return self.async_show_form(
+                step_id="confirm",
+                description_placeholders={
+                    "ip": display_ip,
+                    "port": self._discovered_port,
+                }
+            )
+
+# -----------------------------------------------------------------------------
+# OPTIONS FLOW
+# -----------------------------------------------------------------------------
 class TadoLocalOptionsFlowHandler(config_entries.OptionsFlow):
     """Gestisce la riconfigurazione delle opzioni."""
 

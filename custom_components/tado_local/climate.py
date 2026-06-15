@@ -6,6 +6,9 @@ from homeassistant.components.climate import ClimateEntity
 from homeassistant.components.climate.const import (
     HVACMode,
     ClimateEntityFeature,
+    PRESET_AWAY,
+    PRESET_HOME,
+    PRESET_NONE,
 )
 from homeassistant.const import (
     ATTR_TEMPERATURE,
@@ -47,9 +50,10 @@ class TadoLocalClimate(CoordinatorEntity, ClimateEntity):
         ClimateEntityFeature.TARGET_TEMPERATURE 
         | ClimateEntityFeature.TURN_OFF 
         | ClimateEntityFeature.TURN_ON
+        | ClimateEntityFeature.PRESET_MODE
     )
     
-    _attr_hvac_modes = [HVACMode.HEAT, HVACMode.OFF, HVACMode.AUTO]
+    _attr_preset_modes = [PRESET_HOME, PRESET_AWAY, PRESET_NONE]
 
     def __init__(self, coordinator, initial_data, base_url):
         super().__init__(coordinator)
@@ -58,6 +62,14 @@ class TadoLocalClimate(CoordinatorEntity, ClimateEntity):
         self._device_name = initial_data.get("name", f"Zone {self._zone_id}")
         self._attr_unique_id = f"tado_local_zone_{self._zone_id}"
         self._base_url = base_url
+        self._attr_preset_mode = PRESET_NONE
+        self._update_preset_count = 0
+
+        self._can_cool = (initial_data.get("zone_type", "HEATING") == "AIR_CONDITIONING")
+        if self._can_cool:
+            self._attr_hvac_modes = [HVACMode.HEAT, HVACMode.COOL, HVACMode.OFF, HVACMode.AUTO]
+        else:
+            self._attr_hvac_modes = [HVACMode.HEAT, HVACMode.OFF, HVACMode.AUTO]
 
     @property
     def device_info(self):
@@ -90,24 +102,78 @@ class TadoLocalClimate(CoordinatorEntity, ClimateEntity):
     @property
     def hvac_mode(self) -> HVACMode:
         mode = self._zone_data.get("mode") 
+        # It takes a while for Tado to update the mode after a preset change,
+        # so we need wait a few updates before adjusting the preset mode
+        if self._update_preset_count > 0:
+            self._update_preset_count -= 1
+
         if mode == 0:
+            if self._attr_preset_mode == PRESET_HOME and self._update_preset_count == 0:
+                self._attr_preset_mode = PRESET_NONE
             return HVACMode.OFF
-        return HVACMode.HEAT
+        
+        if self._attr_preset_mode == PRESET_HOME:
+            return HVACMode.AUTO
+        
+        if self._attr_preset_mode == PRESET_AWAY  and self._update_preset_count == 0:
+            self._attr_preset_mode = PRESET_NONE
+        return HVACMode.COOL if (mode == 2 and self._can_cool) else HVACMode.HEAT
 
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
+        if hvac_mode == HVACMode.AUTO:
+            self._attr_preset_mode = PRESET_NONE
+            await self._async_send_zone_update(temperature=-1) # Tado will decide the mode based on previous mode
+            return
+
+        mode = None
         temp_param = None
         if hvac_mode == HVACMode.OFF:
+            mode = 0        # TadoLocal will igrore the temperature 0 param when heating mode is supported in newer API
             temp_param = 0
-        elif hvac_mode == HVACMode.AUTO:
-            temp_param = -1
         elif hvac_mode == HVACMode.HEAT:
-            target = self.target_temperature
-            if target is None or target < 5:
-                target = 21
-            temp_param = target
+            mode = 1
+            temp_param = -1 # TadoLocal will igrore the temperature -1 param when heating mode is supported in newer API
+        elif hvac_mode == HVACMode.COOL and self._can_cool:
+            mode = 2
+        else:
+            _LOGGER.debug("Errore invalid mode")
+            return
+        
+        # For backwards API compatibility we need to send temperature param for mode change, will be ignored by Tado if heating_mode is supported
+        await self._async_send_zone_update(temperature=temp_param, mode=mode) 
 
-        if temp_param is not None:
-            await self._async_send_zone_update(temp_param)
+    async def async_set_preset_mode(self, preset_mode: str) -> None:
+        self._attr_preset_mode = preset_mode
+
+        if preset_mode == PRESET_NONE:
+            return
+
+        # It takes a while for Tado to update the mode after a preset change,
+        # so we need to track the last preset and reset it after a few updates
+        # This is a workaround to avoid sending a preset mode again pending the previous one
+        # wasting API calls 
+        if self._update_preset_count > 0:
+            return
+        self._update_preset_count = 4
+
+        url = f"{self._base_url}/zones/{self._zone_id}/set"
+        params = {
+            "persistant": "true",
+            "heating_enabled": "true" if preset_mode == PRESET_HOME else "false"
+        }
+
+        async with aiohttp.ClientSession() as session:
+            try:
+                async with session.post(url, params=params) as response:
+                    if response.status != 200:
+                        _LOGGER.error("Errore update Tado: %s", await response.text())
+                    else:
+                        await self.coordinator.async_request_refresh()
+            except Exception as err:
+                _LOGGER.error("Errore connessione update: %s", err)
+        
+            _LOGGER.debug("Preset: %s ", self._attr_preset_mode)
+            self._attr_preset_mode = preset_mode
 
     async def async_set_temperature(self, **kwargs) -> None:
         temp = kwargs.get(ATTR_TEMPERATURE)
@@ -115,9 +181,15 @@ class TadoLocalClimate(CoordinatorEntity, ClimateEntity):
             return
         await self._async_send_zone_update(temp)
 
-    async def _async_send_zone_update(self, temperature):
+    async def _async_send_zone_update(self, temperature=None, mode=None):
         url = f"{self._base_url}/zones/{self._zone_id}/set"
-        params = {"temperature": str(temperature)}
+        params = {}
+        if temperature is not None:
+            params["temperature"] = str(temperature)
+        if mode is not None:
+            params["heating_mode"] = str(mode)
+        if len(params) == 0:
+            return
 
         async with aiohttp.ClientSession() as session:
             try:

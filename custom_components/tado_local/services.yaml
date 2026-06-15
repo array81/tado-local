@@ -1,5 +1,19 @@
 turn_off_all_zones:
   description: "Turn off heating for all zones."
+  fields:
+    persistent:
+      required: true
+      description: "Whether to make the change persistent (=true, send to Cloud) or temporary (=false) until the next schedule change."
+      example: "false"
+      selector:
+        boolean:
 
 resume_all_schedules:
   description: "Resume schedule for all zones."
+  fields:
+    persistent:
+      required: true
+      description: "Whether to make the change persistent (=true, send to Cloud) or temporary (=false) until the next schedule change."
+      example: "false"
+      selector:
+        boolean:

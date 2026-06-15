@@ -4,7 +4,15 @@
   "codeowners": [],
   "config_flow": true,
   "documentation": "https://github.com/ampscm/TadoLocal",
+  "issue_tracker": "https://github.com/ampscm/TadoLocal/issues",
   "requirements": [],
   "iot_class": "local_push",
-  "version": "1.0.3"
+  "version": "1.1.2",
+  "loggers": ["custom_components.tado_local"],
+  "zeroconf": [
+    {
+      "type": "_http._tcp.local.",
+      "name": "tado-local*"
+    }
+  ]
 }

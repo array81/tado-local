@@ -11,6 +11,7 @@ from homeassistant.helpers.update_coordinator import (
     DataUpdateCoordinator,
     UpdateFailed,
 )
+from homeassistant.components.persistent_notification import async_create
 
 from .services import async_setup_services
 from .const import DOMAIN, CONF_IP_ADDRESS, CONF_PORT, CONF_UPDATE_INTERVAL, PLATFORMS
@@ -51,6 +52,28 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                         if resp_status.status != 200:
                             raise UpdateFailed(f"Errore API Status: {resp_status.status}")
                         status_info = await resp_status.json()
+
+                        cloud_api = status_info.get("cloud_api", None)
+                        if cloud_api:
+                            if cloud_api.get("enabled", False):
+                                if not cloud_api.get("authenticated", False):
+                                    if cloud_api.get("authentication_required", False):
+                                        _LOGGER.info(f"Cloud needs authentication: {cloud_api.get('message', '')}")
+                                        if cloud_api.get('user_code'): 
+                                            async_create(
+                                                hass,
+                                                f"{cloud_api.get('message', '')}\nUsercode: {cloud_api.get('user_code')}, Expires in: {cloud_api.get('auth_expires_in')} seconds.",
+                                                title="Tado Local: Cloud Authentication Required",
+                                                notification_id="tado_local_cloud_auth",
+                                            )
+                                        else:
+                                            async_create(
+                                                hass,
+                                                "Look in TadoLocal Sever log for details.",
+                                                title="Tado Local: Cloud Authentication Required",
+                                                notification_id="tado_local_cloud_auth",
+                                            )
+
 
                     zones_list = zones_json.get("zones", zones_json) if isinstance(zones_json, dict) else zones_json
                     devices_list = devices_json.get("devices", devices_json) if isinstance(devices_json, dict) else devices_json
